@@ -1,33 +1,62 @@
 package org.choongang.commons;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+@Component
+@RequiredArgsConstructor
 public class Utils {
-    private static ResourceBundle validationsBundle;
-    private static ResourceBundle errorsBundle;
 
-    static {
-        validationsBundle = ResourceBundle.getBundle("messages.validations");
-        errorsBundle = ResourceBundle.getBundle("messages.errors");
-    }
+    private final MessageSource messageSource;
 
-    public static String getMessage(String code, String bundleType) {
-        bundleType = Objects.requireNonNullElse(bundleType, "validation");
-        ResourceBundle bundle = bundleType.equals("error")? errorsBundle:validationsBundle;
+
+    public Map<String, List<String>> getErrorMessages(Errors errors) {
         try {
-            return bundle.getString(code);
+            Map<String, List<String>> messages = errors.getFieldErrors()
+                    .stream()
+                    .collect(Collectors.toMap(FieldError::getField, e -> _getErrorMessages(e.getCodes()), (m1, m2) -> m2));
+
+
+            List<String> gMessages = errors.getGlobalErrors()
+                    .stream()
+                    .map(o -> {
+                        try {
+                            String message = messageSource.getMessage(o.getCode(), null, null);
+                            return message;
+                        } catch (Exception e) {
+                            return "";
+                        }
+                    }).filter(s -> !s.isBlank()).toList();
+
+            messages.put("global", gMessages);
+            return messages;
         } catch (Exception e) {
-            return null;
+            e.printStackTrace();
         }
+        return null;
+
     }
 
-    public static List<String> getMessages(Errors errors) {
-        return errors.getFieldErrors()
-                .stream()
-                .flatMap(f -> Arrays.stream(f.getCodes()).sorted(Comparator.reverseOrder())
-                        .map(c -> getMessage(c, "validation")))
-                .filter(s -> s != null && !s.isBlank()).toList();
+    private List<String> _getErrorMessages(String[] codes) {
+        List<String> messages = Arrays.stream(codes)
+                .map(c -> {
+                    try {
+                        String message = messageSource.getMessage(c, null, null);
+                        return message;
+                    } catch (Exception e) {
+                        return "";
+                    }
+                })
+                .filter(s -> !s.isBlank()).toList();
+
+        return messages;
     }
 }

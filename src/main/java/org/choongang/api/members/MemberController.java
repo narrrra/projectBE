@@ -39,7 +39,7 @@ public class MemberController {
     @PostMapping("/token")
     public ResponseEntity<JSONData<ResponseLogin>> authorize(@Valid @RequestBody RequestLogin requestLogin, Errors errors) {
         // 유효성 검사 처리
-        errorProcess(errors);
+        //errorProcess(errors);
 
         ResponseLogin token = loginService.authenticate(requestLogin.email(), requestLogin.password());
 
@@ -65,7 +65,7 @@ public class MemberController {
         joinService.save(form, errors);
 
         // 유효성 검사 처리
-        errorProcess(errors);
+        //errorProcess(errors);
 
         HttpStatus status = HttpStatus.CREATED;
         JSONData<Object> data = new JSONData<>();
@@ -75,12 +75,12 @@ public class MemberController {
         return ResponseEntity.status(status).body(data);
     }
 
-    private void errorProcess(Errors errors) {
+    /*private void errorProcess(Errors errors) {
         if (errors.hasErrors()) {
             List<String> errorMessages = Utils.getMessages(errors);
             throw new BadRequestException(errorMessages.stream().collect(Collectors.joining("||")));
         }
-    }
+    }*/
 
 
     @GetMapping("/member_only")
